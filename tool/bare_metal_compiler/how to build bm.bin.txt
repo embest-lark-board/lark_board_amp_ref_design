@@ -1,0 +1,5 @@
+(1) place make.exe to C:\windows\
+(2) install arm-2012.03-56-arm-none-eabi.exe(it was downloaded from CodeSourcery)
+(3) navigate to AMP project directory
+(4) make clean
+(5) make

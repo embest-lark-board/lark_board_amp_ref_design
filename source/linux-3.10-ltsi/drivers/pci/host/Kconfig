@@ -1,0 +1,16 @@
+menu "PCI host controller drivers"
+	depends on PCI
+
+config PCI_ALTERA
+	bool "Altera PCIe controller"
+	depends on ARCH_SOCFPGA
+	help
+	  The Altera PCIe Root Port driver.
+
+config PCI_ALTERA_MSI
+	bool "Altera MSI-to-GIC support"
+	depends on PCI_MSI && PCI_ALTERA
+	help
+	  This selects support for Altera MSI to GIC controller IP. Select
+	  this option if the IP is present on system.
+endmenu

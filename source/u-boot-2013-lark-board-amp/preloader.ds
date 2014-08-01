@@ -1,0 +1,64 @@
+############################################################
+#
+# Copyright Altera 2013
+# All Rights Reserved
+# File: preloader.ds
+#
+############################################################
+
+#
+# stop processor if running
+#
+stop
+#reset system
+wait 5s
+
+set semihosting enabled 0
+
+#
+# load the preloader (a.k.a the spl from our uboot dist)
+#
+loadfile "$sdir/spl/u-boot-spl" 0x0
+#set substitute-path "/home/xuewt/share/u-boot-amp/u-boot-2013-lark-board-amp-finial" "Z:\u-boot-2013-lark-board-amp-finial\"
+#
+# set pc to entry point
+#
+#set debug-from *$entrypoint     # Set start-at setting to address of $entrypoint
+start 
+
+#
+# delete any breakpoints
+#
+delete
+
+#
+# set hw breakpoint in spl in function, spl_boot_device,
+# The function, spl_boot_device, is called right before the spl tries
+# to load.  We stop here so we don't have to change any spl.
+#
+tbreak spl_boot_device
+
+# tell target to continue executing spl
+cont
+
+# wait for breakpoint
+wait 60s
+
+
+# Create function to deassert fpga bridge reset
+define fpga_bridges_deassert_reset
+   print "FPGA Bridges: Deassert Reset" 
+   set var $Peripherals::$reset_manager::$reset_manager_brgmodrst.hps2fpga = 0
+   set var $Peripherals::$reset_manager::$reset_manager_brgmodrst.lwhps2fpga = 0
+   set var $Peripherals::$reset_manager::$reset_manager_brgmodrst.fpga2hps = 0
+end
+
+# Deassert fpga bridge reset if the fpga is configured
+#if $Peripherals::$fpgamgrregs::$fpgamgrregs_stat!=0x0
+#   print "FPGA is Configured"
+#   fpga_bridges_deassert_reset
+#else
+#   print "FPGA is not Configured"
+#end
+
+
