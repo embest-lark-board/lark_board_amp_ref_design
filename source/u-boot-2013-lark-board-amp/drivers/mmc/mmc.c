@@ -422,8 +422,6 @@ static int mmc_go_idle(struct mmc *mmc)
 	struct mmc_cmd cmd;
 	int err;
 
-	udelay(1000);
-
 	cmd.cmdidx = MMC_CMD_GO_IDLE_STATE;
 	cmd.cmdarg = 0;
 	cmd.resp_type = MMC_RSP_NONE;
@@ -433,14 +431,14 @@ static int mmc_go_idle(struct mmc *mmc)
 	if (err)
 		return err;
 
-	udelay(2000);
+	udelay(500);
 
 	return 0;
 }
 
 static int sd_send_op_cond(struct mmc *mmc)
 {
-	int timeout = 1000;
+	int timeout = 10000;
 	int err;
 	struct mmc_cmd cmd;
 
@@ -475,7 +473,7 @@ static int sd_send_op_cond(struct mmc *mmc)
 		if (err)
 			return err;
 
-		udelay(1000);
+		udelay(100);
 	} while ((!(cmd.response[0] & OCR_BUSY)) && timeout--);
 
 	if (timeout <= 0)
@@ -1227,13 +1225,6 @@ block_dev_desc_t *mmc_get_dev(int dev)
 }
 #endif
 
-#ifdef CONFIG_LARK_BOARD
-/* It seems that cmd0 can't pass for one time for some sd/tf card
- * such as Kinston 4GB class 4 tf card.
- * so we have to retry the cmd0 for several times.
- */
-static u32 try_sd = 0;
-#endif
 
 int mmc_init(struct mmc *mmc)
 {
@@ -1256,10 +1247,6 @@ int mmc_init(struct mmc *mmc)
 	mmc_set_bus_width(mmc, 1);
 	mmc_set_clock(mmc, 1);
 
-#ifdef CONFIG_LARK_BOARD
-again:
-	try_sd++;
-#endif
 	/* Reset the Card */
 	err = mmc_go_idle(mmc);
 
@@ -1271,13 +1258,7 @@ again:
 
 	/* Test for SD version 2 */
 	err = mmc_send_if_cond(mmc);
-#ifdef CONFIG_LARK_BOARD
-	/* For Lark board, it is strange, we must re-execute cmd0 again, then the cmd8 can run ok */
-	if(err && try_sd < 3)
-		goto again;
-	else
-		try_sd = 0;
-#endif
+
 	/* Now try to get the SD card's operating condition */
 	err = sd_send_op_cond(mmc);
 
